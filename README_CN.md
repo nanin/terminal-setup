@@ -22,6 +22,10 @@
   <img src="assets/btop.png" width="80" alt="btop">
 </p>
 
+<p align="center">
+  <img src="assets/demo.gif" width="600" alt="Demo">
+</p>
+
 ## 快速开始
 
 ```bash
