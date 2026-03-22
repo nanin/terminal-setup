@@ -58,6 +58,23 @@ eval "$(zoxide init zsh)"
 # ─── fnm (Node version manager) ─────────────────────────────────────
 eval "$(fnm env --use-on-cd --shell zsh)"
 
+# ─── SSH key switcher (fallback for multi-account setups) ────────────
+# Usage: set-ssh-key lewis-official-20260224
+# Prefer ~/.ssh/config Host aliases for automatic matching.
+# This is a fallback for edge cases where you need to force a specific key.
+function set-ssh-key() {
+    local key="$HOME/.ssh/$1"
+    if [[ ! -f "$key" ]]; then
+        echo "Key not found: $key" >&2
+        echo "Available keys:" >&2
+        ls ~/.ssh/*.pub 2>/dev/null | sed 's/.*\//  /; s/\.pub$//' >&2
+        return 1
+    fi
+    ssh-add -D 2>/dev/null
+    ssh-add "$key"
+    echo "Active SSH key: $1"
+}
+
 # ─── Aliases ─────────────────────────────────────────────────────────
 alias ls='eza --icons --group-directories-first'
 alias ll='eza -la --icons --group-directories-first'
