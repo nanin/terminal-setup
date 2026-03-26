@@ -635,37 +635,55 @@ else
     success "Starship installed"
 fi
 
-# ─── Step 7: fnm + Node.js ──────────────────────────────────────────
+# ─── Step 7: fnm + Node.js (optional) ───────────────────────────────
 echo ""
 echo -e "${BOLD}══════════════════════════════════════════${NC}"
-echo -e "${BOLD}  🟢 Step 7/8: fnm + Node.js${NC}"
+echo -e "${BOLD}  🟢 Step 7/8: fnm + Node.js (optional)${NC}"
 echo -e "${BOLD}══════════════════════════════════════════${NC}"
 
 if has_cmd fnm; then
     success "fnm already installed"
-else
-    case "$OS" in
-        macos)
-            info "Installing fnm (Fast Node Manager)..."
-            run_cmd brew install fnm
-            ;;
-        debian|wsl)
-            info "Installing fnm via official installer..."
-            run_cmd bash -c "$(curl -fsSL https://fnm.vercel.app/install)" -- --skip-shell
-            export PATH="$HOME/.local/share/fnm:$PATH"
-            ;;
-    esac
-    success "fnm installed"
-fi
-
-# Load fnm in current shell so we can install Node
-if has_cmd fnm; then
+    # Load fnm in current shell so we can install Node
     eval "$(fnm env --use-on-cd --shell bash)"
-    info "Installing Node LTS..."
-    run_cmd fnm install --lts
-    run_cmd fnm default lts-latest
-    run_cmd fnm use lts-latest
-    success "Node LTS installed and set as default"
+    if ! fnm list 2>/dev/null | grep -q lts; then
+        info "Installing Node LTS..."
+        run_cmd fnm install --lts
+        run_cmd fnm default lts-latest
+        run_cmd fnm use lts-latest
+        success "Node LTS installed and set as default"
+    else
+        success "Node LTS already installed"
+    fi
+else
+    echo ""
+    printf "  Install fnm + Node.js? (y/N): "
+    read -r INSTALL_FNM
+    if [[ "$INSTALL_FNM" =~ ^[Yy]$ ]]; then
+        case "$OS" in
+            macos)
+                info "Installing fnm (Fast Node Manager)..."
+                run_cmd brew install fnm
+                ;;
+            debian|wsl)
+                info "Installing fnm via official installer..."
+                run_cmd bash -c "$(curl -fsSL https://fnm.vercel.app/install)" -- --skip-shell
+                export PATH="$HOME/.local/share/fnm:$PATH"
+                ;;
+        esac
+        success "fnm installed"
+
+        # Load fnm in current shell so we can install Node
+        if has_cmd fnm; then
+            eval "$(fnm env --use-on-cd --shell bash)"
+            info "Installing Node LTS..."
+            run_cmd fnm install --lts
+            run_cmd fnm default lts-latest
+            run_cmd fnm use lts-latest
+            success "Node LTS installed and set as default"
+        fi
+    else
+        info "Skipping fnm + Node.js"
+    fi
 fi
 
 # ─── Step 8: Config Files ───────────────────────────────────────────
