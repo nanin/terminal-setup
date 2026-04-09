@@ -9,24 +9,18 @@ $directory\
 [](bg:yellow fg:peach)\
 $git_branch\
 $git_status\
-[](fg:yellow bg:green)\
-$c\
-$rust\
-$golang\
-$nodejs\
-$php\
-$java\
-$kotlin\
-$haskell\
-$python\
-[](fg:green bg:sapphire)\
-$conda\
-[](fg:sapphire bg:lavender)\
-$time\
-[ ](fg:lavender)\
+[ ](fg:yellow)\
 $cmd_duration\
 $line_break\
 $character"""
+
+right_format = """
+$conda\
+$nodejs\
+$python\
+$java\
+$rust\
+$golang"""
 
 palette = 'catppuccin_mocha'
 
@@ -65,8 +59,8 @@ format = '[ $user]($style)'
 [directory]
 style = "bg:peach fg:crust"
 format = "[ $path ]($style)"
-truncation_length = 3
-truncation_symbol = "…/"
+truncation_length = 0
+truncate_to_repo = false
 
 [directory.substitutions]
 "Documents" = "󰈙 "
@@ -87,7 +81,7 @@ format = '[[($all_status$ahead_behind )](fg:crust bg:yellow)]($style)'
 [nodejs]
 symbol = ""
 style = "bg:green"
-format = '[[ $symbol( $version) ](fg:crust bg:green)]($style)'
+format = '[[ $symbol $version ](fg:crust bg:green)]($style)'
 
 [c]
 symbol = " "
@@ -135,16 +129,13 @@ style = "bg:sapphire"
 format = '[[ $symbol( $context) ](fg:crust bg:sapphire)]($style)'
 
 [conda]
-symbol = "  "
-style = "fg:crust bg:sapphire"
-format = '[$symbol$environment ]($style)'
+symbol = " "
+style = "sapphire"
+format = '[$symbol$environment]($style)'
 ignore_base = false
 
 [time]
-disabled = false
-time_format = "%R"
-style = "bg:lavender"
-format = '[[  $time ](fg:crust bg:lavender)]($style)'
+disabled = true
 
 [line_break]
 disabled = false
