@@ -4,7 +4,9 @@
 #
 # Platforms: macOS, Debian/Ubuntu, Windows (via WSL)
 #
-# Stack: Ghostty + (Fish or Zsh) + Starship + Nerd Font (MesloLGS)
+# Stack: Ghostty + (Fish or Zsh) + Starship + Nerd Font
+#        macOS: Maple Mono NF CN
+#        Linux/WSL: MesloLGS NF
 # Tools: bat, eza, fd, ripgrep, btop, zoxide, jq, tldr, delta, lazygit, fzf
 # Node:  fnm (Fast Node Manager) — works with both Fish and Zsh
 # Theme: Catppuccin Mocha (Starship)
@@ -259,58 +261,77 @@ case "$OS" in
         ;;
 esac
 
-# ─── Step 3: Nerd Font (MesloLGS NF) ────────────────────────────────
+# ─── Step 3: Nerd Font ──────────────────────────────────────────────
 echo ""
 echo -e "${BOLD}══════════════════════════════════════════${NC}"
-echo -e "${BOLD}  🔤 Step 3/9: Nerd Font (MesloLGS NF)${NC}"
-echo -e "${BOLD}══════════════════════════════════════════${NC}"
-
-# Determine font directory based on OS
 case "$OS" in
     macos)
-        FONT_DIR="$HOME/Library/Fonts"
+        NERD_FONT_LABEL="Maple Mono NF CN"
         ;;
     debian|wsl)
-        FONT_DIR="$HOME/.local/share/fonts"
+        NERD_FONT_LABEL="MesloLGS NF"
         ;;
 esac
+echo -e "${BOLD}  🔤 Step 3/9: Nerd Font (${NERD_FONT_LABEL})${NC}"
+echo -e "${BOLD}══════════════════════════════════════════${NC}"
 
-MESLO_FONTS=(
-    "MesloLGS NF Regular.ttf"
-    "MesloLGS NF Bold.ttf"
-    "MesloLGS NF Italic.ttf"
-    "MesloLGS NF Bold Italic.ttf"
-)
+install_fonts_macos() {
+    if has_cmd brew && brew list --cask font-maple-mono-nf-cn &>/dev/null; then
+        success "Maple Mono NF CN already installed"
+        return 0
+    fi
 
-# Font source: bundled in repo (fonts/) — no download needed
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-FONT_SRC_DIR="$SCRIPT_DIR/fonts"
+    info "Installing Maple Mono NF CN..."
+    run_cmd brew install --cask font-maple-mono-nf-cn
+    success "Maple Mono NF CN installed"
+}
 
-FONT_INSTALLED=true
-for font in "${MESLO_FONTS[@]}"; do
-    [[ ! -f "$FONT_DIR/$font" ]] && FONT_INSTALLED=false && break
-done
+install_fonts_linux() {
+    local font_dir font_src_dir font_installed=true
+    local meslo_fonts=(
+        "MesloLGS NF Regular.ttf"
+        "MesloLGS NF Bold.ttf"
+        "MesloLGS NF Italic.ttf"
+        "MesloLGS NF Bold Italic.ttf"
+    )
 
-if $FONT_INSTALLED; then
-    success "MesloLGS NF fonts already installed"
-else
+    font_dir="$HOME/.local/share/fonts"
+    font_src_dir="$SCRIPT_DIR/fonts"
+
+    for font in "${meslo_fonts[@]}"; do
+        [[ ! -f "$font_dir/$font" ]] && font_installed=false && break
+    done
+
+    if $font_installed; then
+        success "MesloLGS NF fonts already installed"
+        return 0
+    fi
+
     info "Installing MesloLGS NF fonts from repo..."
-    mkdir -p "$FONT_DIR"
-    for font in "${MESLO_FONTS[@]}"; do
-        if [[ -f "$FONT_SRC_DIR/$font" ]]; then
-            run_cmd cp "$FONT_SRC_DIR/$font" "$FONT_DIR/$font"
+    run_cmd mkdir -p "$font_dir"
+    for font in "${meslo_fonts[@]}"; do
+        if [[ -f "$font_src_dir/$font" ]]; then
+            run_cmd cp "$font_src_dir/$font" "$font_dir/$font"
         else
             warn "Font not found in repo: $font — skipping"
         fi
     done
-    # Rebuild font cache on Linux
-    if [[ "$OS" == "debian" || "$OS" == "wsl" ]]; then
-        if has_cmd fc-cache; then
-            run_cmd fc-cache -fv "$FONT_DIR"
-        fi
+
+    if has_cmd fc-cache; then
+        run_cmd fc-cache -fv "$font_dir"
     fi
+
     success "MesloLGS NF fonts installed"
-fi
+}
+
+case "$OS" in
+    macos)
+        install_fonts_macos
+        ;;
+    debian|wsl)
+        install_fonts_linux
+        ;;
+esac
 
 # ─── Step 4: Shell ──────────────────────────────────────────────────
 echo ""
@@ -735,37 +756,57 @@ echo -e "${BOLD}═════════════════════�
 # --- Ghostty config ---
 deploy_ghostty_config() {
     local ghostty_config_dir
+    local ghostty_config_source
+    local ghostty_config_target
+    local timestamp
+    local existing
+    local existing_configs=()
     case "$OS" in
         macos)
             ghostty_config_dir="$HOME/Library/Application Support/com.mitchellh.ghostty"
+            ghostty_config_source="$CONFIGS_DIR/ghostty.config.macos"
+            ghostty_config_target="$ghostty_config_dir/config.ghostty"
             ;;
         debian)
             ghostty_config_dir="$HOME/.config/ghostty"
+            ghostty_config_source="$CONFIGS_DIR/ghostty.config"
+            ghostty_config_target="$ghostty_config_dir/config"
             ;;
         wsl)
             info "Ghostty config: configure on the Windows side if using Ghostty for Windows."
             info "Deploying Linux-side config to ~/.config/ghostty/ for reference."
             ghostty_config_dir="$HOME/.config/ghostty"
+            ghostty_config_source="$CONFIGS_DIR/ghostty.config"
+            ghostty_config_target="$ghostty_config_dir/config"
             ;;
     esac
 
-    mkdir -p "$ghostty_config_dir"
-    if [[ -f "$ghostty_config_dir/config" ]] || [[ -f "$ghostty_config_dir/config.ghostty" ]]; then
-        local existing
-        existing="$(ls "$ghostty_config_dir"/config* 2>/dev/null | head -1)"
-        run_cmd cp "$existing" "${existing}.bak.$(date +%s)"
+    if [[ ! -f "$ghostty_config_source" ]]; then
+        error "Ghostty config template not found: $ghostty_config_source"
+    fi
+
+    run_cmd mkdir -p "$ghostty_config_dir"
+    [[ -f "$ghostty_config_dir/config" ]] && existing_configs+=("$ghostty_config_dir/config")
+    [[ -f "$ghostty_config_dir/config.ghostty" ]] && existing_configs+=("$ghostty_config_dir/config.ghostty")
+
+    if (( ${#existing_configs[@]} > 0 )); then
+        timestamp="$(date +%s)"
+        for existing in "${existing_configs[@]}"; do
+            run_cmd cp "$existing" "${existing}.bak.$timestamp"
+        done
         warn "Backed up existing Ghostty config"
     fi
 
-    # macOS uses config.ghostty, Linux uses config
-    case "$OS" in
-        macos)
-            run_cmd cp "$CONFIGS_DIR/ghostty.config" "$ghostty_config_dir/config.ghostty"
-            ;;
-        debian|wsl)
-            run_cmd cp "$CONFIGS_DIR/ghostty.config" "$ghostty_config_dir/config"
-            ;;
-    esac
+    run_cmd cp "$ghostty_config_source" "$ghostty_config_target"
+
+    if ! $DRY_RUN && has_cmd ghostty; then
+        if ghostty +validate-config --config-file="$ghostty_config_target" >/dev/null 2>&1; then
+            success "Ghostty config validated"
+        else
+            warn "Ghostty config copied, but validation failed: $ghostty_config_target"
+        fi
+    fi
+
     success "Ghostty config deployed"
 }
 
@@ -932,7 +973,7 @@ else
     echo -e "    🎨 zsh-syntax-highlight — fish-like highlighting"
 fi
 echo -e "    🚀 Starship             — prompt (Catppuccin Mocha)"
-echo -e "    🔤 MesloLGS NF          — nerd font"
+echo -e "    🔤 ${NERD_FONT_LABEL} — nerd font"
 echo -e "    🟢 fnm                  — Node version manager (fast!)"
 echo -e "    📦 bat eza fd rg        — modern coreutils"
 echo -e "    📊 btop                 — system monitor"

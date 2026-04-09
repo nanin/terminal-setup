@@ -91,7 +91,8 @@ bash <(curl -fsSL https://raw.githubusercontent.com/nanin/terminal-setup/main/se
 | **[Ghostty](https://ghostty.org)** | GPU-accelerated terminal emulator |
 | **Fish** or **Zsh** | Shell (your choice) |
 | **[Starship](https://starship.rs)** | Cross-shell prompt (Catppuccin Mocha theme) |
-| **MesloLGS NF** | Nerd Font for icons & powerline glyphs |
+| **Maple Mono NF CN** | macOS default Nerd Font for Ghostty |
+| **MesloLGS NF** | Linux/WSL fallback Nerd Font bundled in the repo |
 | **[bat](https://github.com/sharkdp/bat)** | `cat` with syntax highlighting & line numbers |
 | **[eza](https://github.com/eza-community/eza)** | `ls` with icons, git status, tree view |
 | **[fd](https://github.com/sharkdp/fd)** | `find` but fast & intuitive |
@@ -110,7 +111,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/nanin/terminal-setup/main/se
 
 1. Installs **package manager** (Homebrew on macOS, apt on Linux)
 2. Installs **Ghostty** terminal (macOS; Linux users install separately)
-3. Downloads **MesloLGS NF** nerd fonts
+3. Installs **Maple Mono NF CN** on macOS, **MesloLGS NF** on Linux/WSL
 4. Installs your **shell** of choice + plugins
 5. Installs all **CLI tools** (Homebrew on macOS, apt + GitHub releases on Linux)
 6. Installs **Starship** prompt with Catppuccin Mocha config
@@ -123,6 +124,8 @@ bash <(curl -fsSL https://raw.githubusercontent.com/nanin/terminal-setup/main/se
 ### macOS
 - Full support, everything installs via Homebrew
 - Ghostty installs as a native macOS app
+- Ghostty config is deployed to `~/Library/Application Support/com.mitchellh.ghostty/config.ghostty`
+- Installs `font-maple-mono-nf-cn` so the bundled Ghostty profile renders correctly
 
 ### Debian / Ubuntu
 - CLI tools install via apt where available, GitHub releases for others (delta, lazygit, eza)
@@ -241,14 +244,13 @@ The killer reasons:
 
 If you have existing `.nvmrc` files in your projects, fnm reads them — fully compatible.
 
-### Why MesloLGS NF specifically?
+### Why Maple Mono NF CN on macOS and MesloLGS NF on Linux/WSL?
 
-- Designed for terminal use (monospace, clear at small sizes)
-- Includes all Nerd Font glyphs (icons, powerline, devicons)
-- Same font used by Powerlevel10k — battle-tested in terminals
-- Available in Regular/Bold/Italic/Bold Italic
+- **Maple Mono NF CN:** Better CJK rendering, dense glyph coverage, and the macOS Ghostty profile in this repo is tuned around it.
+- **MesloLGS NF:** Bundled directly in the repo, so Linux and WSL installs stay self-contained without needing extra font downloads.
+- **Both:** Nerd Font variants, so Starship icons and Powerline glyphs render correctly.
 
-Alternatives: JetBrains Mono Nerd Font, Fira Code Nerd Font. All good choices. MesloLGS just has the widest compatibility.
+Alternatives: JetBrains Mono Nerd Font, Fira Code Nerd Font. All good choices. This split keeps the macOS profile looking the way it was designed while preserving a zero-download fallback for Linux/WSL.
 
 ### Why git-delta for diffs?
 
